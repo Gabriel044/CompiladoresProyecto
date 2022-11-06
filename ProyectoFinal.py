@@ -9,14 +9,18 @@ import sys
 sys.path.insert(0, "../..")
 
 tokens = (
-    'NAME', 'INUMBER', 'FNUMBER'
+    'NAME', 'INUMBER', 'FNUMBER', 'BOOLEAN'
 )
 
-literals = ['=', '+', '-', 'i', 'f', 'p']
-
+literals = ['=', '+', '-', 'i', 'f', 'b', 'p', '{', '}', '(', ')']
+reserved =  {
+    'if' : 'IF',
+    'then': 'THEN',
+    'else': 'ELSE'
+}
 # Tokens
 
-t_NAME = r'[a-eg-hj-oq-z]'
+t_NAME = r'[ac-eg-hj-oq-z]'
 
 
 
@@ -30,6 +34,20 @@ def t_INUMBER(t):
     r'\d+'
     t.value = int(t.value)
     return t
+
+def t_BOOLEAN(t):
+    r'True|False'
+    t.value = bool(t.value)  
+
+def t_lbrace(t):
+     r'\{'
+     t.type = '{'      
+     return t
+ 
+ def t_rbrace(t):
+     r'\}'
+     t.type = '}'
+     return t
 
 
 t_ignore = " \t"
@@ -46,8 +64,31 @@ def t_error(t):
 import ply.lex as lex
 lexer = lex.lex()
 
-# Parsing rules
+# Test
+data = '''
+10.4 
+11
+False
+ '''
+lexer.input(data)
 
+while True:
+    tok = lexer.token()
+    print(tok)
+    if not tok:
+        break;
+    print(tok)
+    print(tok.type, tok.value, tok.lineno, tok.lexpos) # lexpos es posición en tabla de símbolos.
+
+# Parsing rules
+class Node:
+    def __init__(self,type,children=None,leaf=None):
+        self.type = type
+        if children:
+            self.children = children
+        else:
+            self.children = [ ]
+        self.leaf = leaf
 # dictionary of names
 names = {}
 abstractTree = {}
@@ -116,6 +157,10 @@ def p_expression_fnumber(p):
     "expression : FNUMBER"
     p[0] = p[1]
 
+def p_expression_fnumber(p):
+    "expression : BOOLEAN"
+    p[0] = p[1]
+
 
 def p_expression_name(p):
     "expression : NAME"
@@ -135,10 +180,10 @@ def p_error(p):
 import ply.yacc as yacc
 parser = yacc.yacc()
 
-
+""" 
 f = open("code.txt")
 content = f.read()
-yacc.parse(content)
+yacc.parse(content) """
 
 # while True:
 #     try:
