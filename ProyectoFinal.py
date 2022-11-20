@@ -95,14 +95,16 @@ def p_dcl_declare_int(p):
             value = p[4].childrens[0].val - p[4].childrens[1].val
         else:
             value = p[4].val """
-
-    symbolsTable["table"][p[2]] = { "type": "INT", "value": 0 if len(p) == 4 else p[4].val}
-    n = Node()
-    n.type = "INT_DLC" if len(p) == 4 else "INT_INLINE_DLC"
-    n.val = p[2]
-    if len(p) == 6:
-        n.childrens.append(p[4])
-    p[0] = n
+    if len(p) == 4 or isinstance(p[4].val,int):
+        symbolsTable["table"][p[2]] = { "type": "INT", "value": 0 if len(p) == 4 else p[4].val}
+        n = Node()
+        n.type = "INT_DLC" if len(p) == 4 else "INT_INLINE_DLC"
+        n.val = p[2]
+        if len(p) == 6:
+            n.childrens.append(p[4])
+        p[0] = n
+    else:
+        print("Incompatible variable data type int and value data type "+ str(type(p[4].val)))
     """  if len(p) == 4:
         symbolsTable["table"][p[2]] = { "type": "INT", "value":0}
         n = Node()
@@ -114,22 +116,24 @@ def p_dcl_declare_int(p):
 def p_statement_declare_float(p):
     '''statement : FLOATDCL NAME ";"
                  | FLOATDCL NAME "=" expression ";"'''
-    value = 0
+    """ value = 0
     if len(p) == 6:
         if p[4].type == '+':
             value = p[4].childrens[0].val + p[4].childrens[1].val
         elif p[4].type == '-':
             value = p[4].childrens[0].val - p[4].childrens[1].val
         else:
-            value = p[4].val
-
-    symbolsTable["table"][p[2]] = { "type": "FLOAT", "value":0 if len(p) == 4 else p[4].val} 
-    n = Node()
-    n.type = "FLOAT_DLC" if len(p) == 4 else "FLOAT_INLINE_DLC"
-    n.val = p[2]
-    if len(p) == 6:
-        n.childrens.append(p[4])
-    p[0] = n
+            value = p[4].val """
+    if len(p) == 4 or isinstance(p[4].val,float):
+        symbolsTable["table"][p[2]] = { "type": "FLOAT", "value": 0 if len(p) == 4 else p[4].val} 
+        n = Node()
+        n.type = "FLOAT_DLC" if len(p) == 4 else "FLOAT_INLINE_DLC"
+        n.val = p[2]
+        if len(p) == 6:
+            n.childrens.append(p[4])
+        p[0] = n
+    else:
+        print("Incompatible variable data type float and value data type "+ str(type(p[4].val)))
     """ if len(p) == 4:
         symbolsTable["table"][p[2]] = { "type": "FLOAT", "value":0 }
         n = Node()
@@ -142,13 +146,16 @@ def p_statement_declare_float(p):
 def p_statement_declare_bool(p):
     '''statement : BOOLDCL NAME ";"
                  | BOOLDCL NAME "=" expression ";"'''
-    symbolsTable["table"][p[2]] = { "type": "BOOLEAN", "value": False if len(p) == 4 else p[4].val}
-    n = Node()
-    n.type = "BOOL_DLC" if len(p) == 4 else "BOOL_INLINE_DLC"
-    n.val = p[2]
-    if len(p) == 6:
-        n.childrens.append(p[4])
-    p[0] = n
+    if len(p) == 4 or isinstance(p[4].val,bool):
+        symbolsTable["table"][p[2]] = { "type": "BOOLEAN", "value": False if len(p) == 4 else p[4].val}
+        n = Node()
+        n.type = "BOOL_DLC" if len(p) == 4 else "BOOL_INLINE_DLC"
+        n.val = p[2]
+        if len(p) == 6:
+            n.childrens.append(p[4])
+        p[0] = n
+    else:
+        print("Incompatible variable data type boolean and value data type "+ str(type(p[4].val)))
 def p_statement_print(p):
     'statement : PRINT expression ";"'
     n = Node()
@@ -211,7 +218,7 @@ def p_expression_binop(p):
         if isNumber(expVal1) and isNumber(expVal2):
             n = Node()
             n.type = '+'
-            n.val = int(expVal1) + int(expVal2)
+            n.val = (int(expVal1) + int(expVal2)) if isinstance(expVal1,int) and isinstance(expVal2,int) else (float(expVal1) + float(expVal2))
             n.childrens.append(p[1])
             n.childrens.append(p[3])
             p[0] = n
@@ -221,7 +228,7 @@ def p_expression_binop(p):
         if isNumber(expVal1) and isNumber(expVal2):
             n = Node()
             n.type = '-'
-            n.val = int(expVal1) - int(expVal2)
+            n.val = (int(expVal1) - int(expVal2)) if isinstance(expVal1,int) and isinstance(expVal2,int) else (float(expVal1) - float(expVal2))
             n.childrens.append(p[1])
             n.childrens.append(p[3])
             p[0] = n
