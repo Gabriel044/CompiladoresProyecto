@@ -11,13 +11,15 @@ reserved = {
     "else": "ELSE",
     "elif": "ELIF",
     "for": "FOR",
-    "while": "WHILE"
+    "while": "WHILE",
+    "and": "AND",
+    "or": "OR"
 }
 tokens = [
     'NAME', 'INUMBER', 'FNUMBER',
 ]
 tokens.extend(reserved.values())
-literals = ['=', '+', '-', ';', '(', ')', '{', '}']
+literals = ['=', '+', '-', ';', '(', ')', '{', '}', '!']
 # Tokens
 def t_NAME(t):
     r'[a-zA-Z_]+[a-zA-Z0-9]*' #r'[a-eg-hj-oq-z]'
@@ -43,6 +45,8 @@ def t_error(t):
 import ply.lex as lex
 lexer = lex.lex()
 # Parsing rules
+def isNumber(x):
+    return isinstance(x, int) or isinstance(x, float)
 class Node:
     
     # childrens = None
@@ -80,28 +84,70 @@ def p_statements_recursion(p):
         p[0] = stmts
     else: 
         p[0] = [ stmt ]
-    
 def p_dcl_declare_int(p):
-    'statement : INTDCL NAME ";"'
-    symbolsTable["table"][p[2]] = { "type": "INT", "value":0}
+    '''statement : INTDCL NAME ";"
+                 | INTDCL NAME "=" expression ";"'''
+    """ value = 0
+    if len(p) == 6:
+        if p[4].type == '+':
+            value = p[4].childrens[0].val + p[4].childrens[1].val
+        elif p[4].type == '-':
+            value = p[4].childrens[0].val - p[4].childrens[1].val
+        else:
+            value = p[4].val """
+
+    symbolsTable["table"][p[2]] = { "type": "INT", "value": 0 if len(p) == 4 else p[4].val}
     n = Node()
-    n.type = "INT_DLC"
+    n.type = "INT_DLC" if len(p) == 4 else "INT_INLINE_DLC"
     n.val = p[2]
+    if len(p) == 6:
+        n.childrens.append(p[4])
     p[0] = n
+    """  if len(p) == 4:
+        symbolsTable["table"][p[2]] = { "type": "INT", "value":0}
+        n = Node()
+        n.type = "INT_DLC"
+        n.val = p[2]
+        p[0] = n
+    else:
+        p[0] = p[1] """
 def p_statement_declare_float(p):
-    'statement : FLOATDCL NAME ";"'
-    symbolsTable["table"][p[2]] = { "type": "FLOAT", "value":0 }
+    '''statement : FLOATDCL NAME ";"
+                 | FLOATDCL NAME "=" expression ";"'''
+    value = 0
+    if len(p) == 6:
+        if p[4].type == '+':
+            value = p[4].childrens[0].val + p[4].childrens[1].val
+        elif p[4].type == '-':
+            value = p[4].childrens[0].val - p[4].childrens[1].val
+        else:
+            value = p[4].val
+
+    symbolsTable["table"][p[2]] = { "type": "FLOAT", "value":0 if len(p) == 4 else p[4].val} 
     n = Node()
-    n.type = "FLOAT_DLC"
+    n.type = "FLOAT_DLC" if len(p) == 4 else "FLOAT_INLINE_DLC"
     n.val = p[2]
+    if len(p) == 6:
+        n.childrens.append(p[4])
     p[0] = n
+    """ if len(p) == 4:
+        symbolsTable["table"][p[2]] = { "type": "FLOAT", "value":0 }
+        n = Node()
+        n.type = "FLOAT_DLC"
+        n.val = p[2]
+        p[0] = n
+    else:
+        p[0] = p[1] """
 
 def p_statement_declare_bool(p):
-    'statement : BOOLDCL NAME ";"'
-    symbolsTable["table"][p[2]] = { "type": "BOOLEAN", "value": False }
+    '''statement : BOOLDCL NAME ";"
+                 | BOOLDCL NAME "=" expression ";"'''
+    symbolsTable["table"][p[2]] = { "type": "BOOLEAN", "value": False if len(p) == 4 else p[4].val}
     n = Node()
-    n.type = "BOOL_DLC"
+    n.type = "BOOL_DLC" if len(p) == 4 else "BOOL_INLINE_DLC"
     n.val = p[2]
+    if len(p) == 6:
+        n.childrens.append(p[4])
     p[0] = n
 def p_statement_print(p):
     'statement : PRINT expression ";"'
@@ -149,20 +195,56 @@ def p_expression_group(p):
     "expression : '(' expression ')'"
     p[0] = p[2]
 def p_expression_binop(p):
-    '''expression : expression '+' expression
-                  | expression '-' expression'''
+    '''expression : expression "+" expression
+                  | expression "-" expression
+                  | expression "<" expression
+                  | expression "<" "=" expression
+                  | expression ">" expression
+                  | expression ">" "=" expression
+                  | expression "=" "=" expression
+                  | expression AND expression
+                  | expression OR expression'''
+    expVal1 = p[1].val if p[1].type != "ID" else (symbolsTable["table"][p[1].val]).get("value")
+    expVal2 = p[3].val if p[3].type != "ID" else (symbolsTable["table"][p[3].val]).get("value")
     if p[2] == '+':
-        n = Node()
-        n.type = '+'
-        n.childrens.append(p[1])
-        n.childrens.append(p[3])
-        p[0] = n
+        print(p[1].val)
+        if isNumber(expVal1) and isNumber(expVal2):
+            n = Node()
+            n.type = '+'
+            n.val = int(expVal1) + int(expVal2)
+            n.childrens.append(p[1])
+            n.childrens.append(p[3])
+            p[0] = n
+        else:
+            print("Error: incompatible data types " + str(type(p[1])) + " and " + str(type(p[3])) + "for operation " + p[2])
     elif p[2] == '-':
-        n = Node()
-        n.type = '-'
-        n.childrens.append(p[1])
-        n.childrens.append(p[3])
-        p[0] = n
+        if isNumber(expVal1) and isNumber(expVal2):
+            n = Node()
+            n.type = '-'
+            n.val = int(expVal1) - int(expVal2)
+            n.childrens.append(p[1])
+            n.childrens.append(p[3])
+            p[0] = n
+        else:
+            print("Error: incompatible data types " + type(p[1]) + " and " + type(p[3]) + "for operation " + p[2])
+    elif p[2] == "AND":
+        if isinstance(p[1],bool) and isinstance(p[3],bool):
+            n = Node()
+            n.type = "AND"
+            n.childrens.append(p[1])
+            n.childrens.append(p[3])
+            p[0] = n
+        else:
+            print("Error: incompatible data types " + type(p[1]) + " and " + type(p[3]) + "for operation " + p[2])
+    elif p[2] == "OR":
+        if isinstance(p[1],bool) and isinstance(p[3],bool):
+            n = Node()
+            n.type = "OR"
+            n.childrens.append(p[1])
+            n.childrens.append(p[3])
+            p[0] = n
+        else:
+            print("Error: incompatible data types " + type(p[1]) + " and " + type(p[3]) + "for operation " + p[2])
 
 def p_expression_inumber(p):
     "expression : INUMBER"
@@ -200,19 +282,25 @@ def p_error(p):
 import ply.yacc as yacc
 parser = yacc.yacc()
 
-f = open("code.txt")
+f = open("test.txt")
 content = f.read()
 yacc.parse(content)
 abstractTree.print()
 varCounter = 0
 labelCounter = 0
 def genTAC(node):
+    print(node.type)
+    print(node.val)
     global varCounter
     global labelCounter
     if ( node.type == "ASIGN" ):
         print(node.childrens[0].val  + " := " + genTAC(node.childrens[1]) )
     elif ( node.type == "INUMBER"):
         return str(node.val)
+    elif ( node.type == "ID" ):
+        symbol = symbolsTable["table"][node.val]
+        print(symbol)
+        return node.val + " " + str(symbol.get("value"))   
     elif ( node.type == "+"):
         tempVar = "t" + str(varCounter)
         varCounter = varCounter +1
