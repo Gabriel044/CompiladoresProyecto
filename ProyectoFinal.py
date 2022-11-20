@@ -163,13 +163,18 @@ def p_statement_print(p):
     n.childrens.append(p[2])
     p[0] = n
 def p_statement_if(p):
-    'statement : IF "(" boolexp ")" "{" stmts "}"'
+    '''statement : IF "(" boolexp ")" "{" stmts "}"
+                 | IF "(" boolexp ")" "{" stmts "} ELSE "{" stmts "}"'''
     n = Node()
     n.type = 'IF'
     n2 = Node()
     n2.childrens = p[6]
     n.childrens.append(p[3])
     n.childrens.append(n2)
+    if len(p) == 12:
+        n3 = Node()
+        n3.childrens = p[10]
+        n.childrens.append(n3)
     p[0] = n
 """ def p_statement_for(p):
     'statement : FOR "("  ")" "{" stmts "}"' """
