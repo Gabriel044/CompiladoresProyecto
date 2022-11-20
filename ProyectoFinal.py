@@ -8,7 +8,10 @@ reserved = {
     "true": "BOOLVAL",
     "false": "BOOLVAL",
     "if": "IF",
-    "else": "ELSE"
+    "else": "ELSE",
+    "elif": "ELIF",
+    "for": "FOR",
+    "while": "WHILE"
 }
 tokens = [
     'NAME', 'INUMBER', 'FNUMBER',
@@ -115,6 +118,17 @@ def p_statement_if(p):
     n.childrens.append(p[3])
     n.childrens.append(n2)
     p[0] = n
+""" def p_statement_for(p):
+    'statement : FOR "("  ")" "{" stmts "}"' """
+def p_statement_while(p):
+    'statement : WHILE "(" boolexp ")" "{" stmts "}"'
+    n = Node()
+    n.type = "WHILE"
+    n2 = Node()
+    n2.childrens = p[6]
+    n.childrens.append(p[3])
+    n.childrens.append(n2)
+    p[0] = n
 def p_statement_assign(p):
     'statement : NAME "=" expression ";"'
     if p[1] not in symbolsTable["table"]:
@@ -202,8 +216,7 @@ def genTAC(node):
     elif ( node.type == "+"):
         tempVar = "t" + str(varCounter)
         varCounter = varCounter +1
-        print( tempVar + " := " + genTAC(node.childrens[0]) + " + " + 
-genTAC(node.childrens[1]))
+        print( tempVar + " := " + genTAC(node.childrens[0]) + " + " + genTAC(node.childrens[1]))
         return tempVar
     elif ( node.type == "PRINT"):
         print( "PRINT " + genTAC(node.childrens[0]))
@@ -216,6 +229,8 @@ genTAC(node.childrens[1]))
         print ( "gotoLabelIf " + tempVar + " " + tempLabel)
         genTAC(node.childrens[1])
         print ( tempLabel)
+    elif (node.type == "WHILE"):
+        print("WHILE")
     else:
         for child in node.childrens:
             genTAC(child)
