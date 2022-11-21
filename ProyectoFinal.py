@@ -340,7 +340,18 @@ def genTAC(node):
         labelCounter = labelCounter + 1
         print ( "gotoLabelIf " + tempVar + " " + tempLabel)
         genTAC(node.childrens[1])
-        print ( tempLabel)            
+        print ( tempLabel)
+    elif ( node.type == "FOR"):
+        print(node.childrens[0].val +" := "+ str(symbolsTable["table"][node.childrens[0].val].get("value")))
+        tempVar = "t" + str(varCounter)
+        varCounter = varCounter +1
+        print(tempVar+ " := " + str(node.childrens[1].val))
+        tempLabel = "l" + str(labelCounter)
+        labelCounter = labelCounter + 1
+        print ( "gotoLabelIf " + tempVar + " " + tempLabel)
+        genTAC(node.childrens[3])
+        genTAC(node.childrens[2])
+        print(tempLabel)          
     else:
         for child in node.childrens:
             genTAC(child)
