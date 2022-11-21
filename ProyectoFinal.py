@@ -216,7 +216,7 @@ def p_expression_binop(p):
             n.childrens.append(p[3])
             p[0] = n
         else:
-            print("Error: incompatible data types " + str(type(p[1])) + " and " + str(type(p[3])) + "for operation " + p[2])
+            print("Error: incompatible data types " + type(expVal1) + " and " + type(expVal2) + "for operation " + p[2])
     elif p[2] == '-':
         if isNumber(expVal1) and isNumber(expVal2):
             n = Node()
@@ -226,9 +226,9 @@ def p_expression_binop(p):
             n.childrens.append(p[3])
             p[0] = n
         else:
-            print("Error: incompatible data types " + type(p[1]) + " and " + type(p[3]) + "for operation " + p[2])
+            print("Error: incompatible data types " + type(expVal1) + " and " + type(expVal2) + "for operation " + p[2])
     elif p[2] == "and":
-        if isinstance(p[1].val,bool) and isinstance(p[3].val,bool):
+        if isinstance(expVal1,bool) and isinstance(expVal2,bool):
             print("HI")
             n = Node()
             n.type = "AND"
@@ -237,9 +237,9 @@ def p_expression_binop(p):
             n.childrens.append(p[3])
             p[0] = n
         else:
-            print("Error: incompatible data types " + type(p[1]) + " and " + type(p[3]) + "for operation " + p[2])
+            print("Error: incompatible data types " + str(type(expVal1)) + " and " + str(type(expVal2)) + "for operation " + p[2])
     elif p[2] == "or":
-        if isinstance(p[1].val,bool) and isinstance(p[3].val,bool):
+        if isinstance(expVal1,bool) and isinstance(expVal2,bool):
             n = Node()
             n.type = "OR"
             n.val = p[1].val or p[3].val
@@ -247,7 +247,7 @@ def p_expression_binop(p):
             n.childrens.append(p[3])
             p[0] = n
         else:
-            print("Error: incompatible data types " + type(p[1]) + " and " + type(p[3]) + "for operation " + p[2])
+            print("Error: incompatible data types " + type(expVal1) + " and " + type(expVal2) + "for operation " + p[2])
     else:
         print("Unhandled use case")
 
