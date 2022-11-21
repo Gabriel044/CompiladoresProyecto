@@ -84,18 +84,21 @@ def p_statements_recursion(p):
         p[0] = stmts
     else: 
         p[0] = [ stmt ]
+def p_dcl_declare_int_inline(p):
+    'inlineInt : INTDCL NAME "=" expression'
+    if isinstance(p[4].val,int):
+        symbolsTable["table"][p[2]] = { "type": "INT", "value": p[4].val}
+        n = Node()
+        n.type = "INT_INLINE_DLC"
+        n.val = p[2]
+        n.childrens.append(p[4])
+        p[0] = n
+    else:
+        print("Incompatible variable data type int and value data type "+ str(type(p[4].val)))
 def p_dcl_declare_int(p):
     '''statement : INTDCL NAME ";"
-                 | INTDCL NAME "=" expression ";"'''
-    """ value = 0
-    if len(p) == 6:
-        if p[4].type == '+':
-            value = p[4].childrens[0].val + p[4].childrens[1].val
-        elif p[4].type == '-':
-            value = p[4].childrens[0].val - p[4].childrens[1].val
-        else:
-            value = p[4].val """
-    if len(p) == 4 or isinstance(p[4].val,int):
+                 | inlineInt ";"'''
+    if len(p) == 4:
         symbolsTable["table"][p[2]] = { "type": "INT", "value": 0 if len(p) == 4 else p[4].val}
         n = Node()
         n.type = "INT_DLC" if len(p) == 4 else "INT_INLINE_DLC"
@@ -104,26 +107,10 @@ def p_dcl_declare_int(p):
             n.childrens.append(p[4])
         p[0] = n
     else:
-        print("Incompatible variable data type int and value data type "+ str(type(p[4].val)))
-    """  if len(p) == 4:
-        symbolsTable["table"][p[2]] = { "type": "INT", "value":0}
-        n = Node()
-        n.type = "INT_DLC"
-        n.val = p[2]
-        p[0] = n
-    else:
-        p[0] = p[1] """
+        p[0] = p[1]
 def p_statement_declare_float(p):
     '''statement : FLOATDCL NAME ";"
                  | FLOATDCL NAME "=" expression ";"'''
-    """ value = 0
-    if len(p) == 6:
-        if p[4].type == '+':
-            value = p[4].childrens[0].val + p[4].childrens[1].val
-        elif p[4].type == '-':
-            value = p[4].childrens[0].val - p[4].childrens[1].val
-        else:
-            value = p[4].val """
     if len(p) == 4 or isinstance(p[4].val,float):
         symbolsTable["table"][p[2]] = { "type": "FLOAT", "value": 0 if len(p) == 4 else p[4].val} 
         n = Node()
@@ -134,15 +121,6 @@ def p_statement_declare_float(p):
         p[0] = n
     else:
         print("Incompatible variable data type float and value data type "+ str(type(p[4].val)))
-    """ if len(p) == 4:
-        symbolsTable["table"][p[2]] = { "type": "FLOAT", "value":0 }
-        n = Node()
-        n.type = "FLOAT_DLC"
-        n.val = p[2]
-        p[0] = n
-    else:
-        p[0] = p[1] """
-
 def p_statement_declare_bool(p):
     '''statement : BOOLDCL NAME ";"
                  | BOOLDCL NAME "=" expression ";"'''
@@ -164,7 +142,7 @@ def p_statement_print(p):
     p[0] = n
 def p_statement_if(p):
     '''statement : IF "(" boolexp ")" "{" stmts "}"
-                 | IF "(" boolexp ")" "{" stmts "} ELSE "{" stmts "}"'''
+                 | IF "(" boolexp ")" "{" stmts "}" ELSE "{" stmts "}"'''
     n = Node()
     n.type = 'IF'
     n2 = Node()
@@ -176,8 +154,19 @@ def p_statement_if(p):
         n3.childrens = p[10]
         n.childrens.append(n3)
     p[0] = n
-""" def p_statement_for(p):
-    'statement : FOR "("  ")" "{" stmts "}"' """
+def p_statement_for(p):
+    'statement : FOR "(" inlineInt ";" boolexp ";" statement ")" "{" stmts "}"'
+    n = Node()
+    n.type = "FOR"
+
+    n2 = Node()
+    n2.childrens = p[10]
+
+    n.childrens.append(p[3])
+    n.childrens.append(p[5])
+    n.childrens.append(p[7])
+    n.childrens.append(n2)
+    p[0] = n
 def p_statement_while(p):
     'statement : WHILE "(" boolexp ")" "{" stmts "}"'
     n = Node()
@@ -219,7 +208,6 @@ def p_expression_binop(p):
     expVal1 = p[1].val if p[1].type != "ID" else (symbolsTable["table"][p[1].val]).get("value")
     expVal2 = p[3].val if p[3].type != "ID" else (symbolsTable["table"][p[3].val]).get("value")
     if p[2] == '+':
-        print(p[1].val)
         if isNumber(expVal1) and isNumber(expVal2):
             n = Node()
             n.type = '+'
@@ -239,24 +227,29 @@ def p_expression_binop(p):
             p[0] = n
         else:
             print("Error: incompatible data types " + type(p[1]) + " and " + type(p[3]) + "for operation " + p[2])
-    elif p[2] == "AND":
-        if isinstance(p[1],bool) and isinstance(p[3],bool):
+    elif p[2] == "and":
+        if isinstance(p[1].val,bool) and isinstance(p[3].val,bool):
+            print("HI")
             n = Node()
             n.type = "AND"
+            n.val = p[1].val and p[3].val
             n.childrens.append(p[1])
             n.childrens.append(p[3])
             p[0] = n
         else:
             print("Error: incompatible data types " + type(p[1]) + " and " + type(p[3]) + "for operation " + p[2])
-    elif p[2] == "OR":
-        if isinstance(p[1],bool) and isinstance(p[3],bool):
+    elif p[2] == "or":
+        if isinstance(p[1].val,bool) and isinstance(p[3].val,bool):
             n = Node()
             n.type = "OR"
+            n.val = p[1].val or p[3].val
             n.childrens.append(p[1])
             n.childrens.append(p[3])
             p[0] = n
         else:
             print("Error: incompatible data types " + type(p[1]) + " and " + type(p[3]) + "for operation " + p[2])
+    else:
+        print("Unhandled use case")
 
 def p_expression_inumber(p):
     "expression : INUMBER"
@@ -301,8 +294,7 @@ abstractTree.print()
 varCounter = 0
 labelCounter = 0
 def genTAC(node):
-    print(node.type)
-    print(node.val)
+    #print(node.type +" "+str(node.val))
     global varCounter
     global labelCounter
     if ( node.type == "ASIGN" ):
@@ -311,16 +303,16 @@ def genTAC(node):
         return str(node.val)
     elif ( node.type == "ID" ):
         symbol = symbolsTable["table"][node.val]
-        print(symbol)
-        return node.val + " " + str(symbol.get("value"))   
+        #print(symbol)
+        return str(symbol.get("value"))   
     elif ( node.type == "+"):
         tempVar = "t" + str(varCounter)
         varCounter = varCounter +1
         print( tempVar + " := " + genTAC(node.childrens[0]) + " + " + genTAC(node.childrens[1]))
         return tempVar
     elif ( node.type == "PRINT"):
-        print( "PRINT " + genTAC(node.childrens[0]))
-    elif ( node.type == "IF" ):
+        print( "PRINT "+ genTAC(node.childrens[0]))
+    elif ( node.type == "IF" or node.type == "WHILE"):
         tempVar = "t" + str(varCounter)
         varCounter = varCounter +1
         print ( tempVar + " := !" + str(node.childrens[0].val))
@@ -328,9 +320,7 @@ def genTAC(node):
         labelCounter = labelCounter + 1
         print ( "gotoLabelIf " + tempVar + " " + tempLabel)
         genTAC(node.childrens[1])
-        print ( tempLabel)
-    elif (node.type == "WHILE"):
-        print("WHILE")
+        print ( tempLabel)            
     else:
         for child in node.childrens:
             genTAC(child)
