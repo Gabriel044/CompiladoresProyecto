@@ -227,6 +227,26 @@ def p_expression_binop(p):
             p[0] = n
         else:
             print("Error: incompatible data types " + type(expVal1) + " and " + type(expVal2) + "for operation " + p[2])
+    elif p[2] == '*':
+        if isNumber(expVal1) and isNumber(expVal2):
+            n = Node()
+            n.type = '*'
+            n.val = (int(expVal1) * int(expVal2)) if isinstance(expVal1,int) and isinstance(expVal2,int) else (float(expVal1) * float(expVal2))
+            n.childrens.append(p[1])
+            n.childrens.append(p[3])
+            p[0] = n
+        else:
+            print("Error: incompatible data types " + type(expVal1) + " and " + type(expVal2) + "for operation " + p[2])
+    elif p[2] == '/':
+        if isNumber(expVal1) and isNumber(expVal2):
+            n = Node()
+            n.type = '/'
+            n.val = (int(expVal1) / int(expVal2)) if isinstance(expVal1,int) and isinstance(expVal2,int) else (float(expVal1) / float(expVal2))
+            n.childrens.append(p[1])
+            n.childrens.append(p[3])
+            p[0] = n
+        else:
+            print("Error: incompatible data types " + type(expVal1) + " and " + type(expVal2) + "for operation " + p[2])
     elif p[2] == "and":
         if isinstance(expVal1,bool) and isinstance(expVal2,bool):
             print("HI")
