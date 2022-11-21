@@ -1,3 +1,4 @@
+import math
 import sys
 sys.path.insert(0, "..")
 reserved = {
@@ -242,6 +243,16 @@ def p_expression_binop(p):
             n = Node()
             n.type = '/'
             n.val = (int(expVal1) / int(expVal2)) if isinstance(expVal1,int) and isinstance(expVal2,int) else (float(expVal1) / float(expVal2))
+            n.childrens.append(p[1])
+            n.childrens.append(p[3])
+            p[0] = n
+        else:
+            print("Error: incompatible data types " + type(expVal1) + " and " + type(expVal2) + "for operation " + p[2])
+    elif p[2] == '^':
+        if isNumber(expVal1) and isNumber(expVal2):
+            n = Node()
+            n.type = '^'
+            n.val = (math.pow(int(expVal1), int(expVal2))) if isinstance(expVal1,int) and isinstance(expVal2,int) else (math.pow(float(expVal1), float(expVal2)))
             n.childrens.append(p[1])
             n.childrens.append(p[3])
             p[0] = n
