@@ -14,13 +14,17 @@ reserved = {
     "for": "FOR",
     "while": "WHILE",
     "and": "AND",
-    "or": "OR"
+    "or": "OR",
+    "==": "EQUAL",
+    ">=": "GREATEREQUAL",
+    "<=": "LESSEQUAL",
+    "!=": "DIFFERENT"
 }
 tokens = [
     'NAME', 'INUMBER', 'FNUMBER',
 ]
 tokens.extend(reserved.values())
-literals = ['=', '+', '-', ';', '(', ')', '{', '}', '!']
+literals = ['=', '+', '-', '*', '/', '^', ';', '(', ')', '{', '}', '!', '<', '>']
 # Tokens
 def t_NAME(t):
     r'[a-zA-Z_]+[a-zA-Z0-9]*' #r'[a-eg-hj-oq-z]'
@@ -58,6 +62,7 @@ class Node:
         self.val = ''
     def print(self, lvl = 0):
         r = (' ' * lvl) + self.type + ":" + str(self.val)
+        #("--------")
         print(r)
         #print(self.childrens)
         for c in self.childrens:
@@ -196,16 +201,53 @@ def p_statement_assign(p):
 def p_expression_group(p):
     "expression : '(' expression ')'"
     p[0] = p[2]
+def p_expression_comp(p):
+    '''expression : expression "<" expression
+                  | expression ">" expression
+                  | expression EQUAL expression
+                  | expression GREATEREQUAL expression
+                  | expression LESSEQUAL expression'''
+    expVal1 = p[1].val if p[1].type != "ID" else (symbolsTable["table"][p[1].val]).get("value")
+    expVal2 = p[3].val if p[3].type != "ID" else (symbolsTable["table"][p[3].val]).get("value")
+def p_expression_logic(p):
+    '''expression : expression AND expression
+                  | expression OR expression'''
+    expVal1 = p[1].val if p[1].type != "ID" else (symbolsTable["table"][p[1].val]).get("value")
+    expVal2 = p[3].val if p[3].type != "ID" else (symbolsTable["table"][p[3].val]).get("value")
+    if p[2] == "and":
+        if isinstance(expVal1,bool) and isinstance(expVal2,bool):
+            n = Node()
+            n.type = "AND"
+            n.val = p[1].val and p[3].val
+            n.childrens.append(p[1])
+            n.childrens.append(p[3])
+            p[0] = n
+        else:
+            print("Error: incompatible data types " + str(type(expVal1)) + " and " + str(type(expVal2)) + "for operation " + p[2])
+    elif p[2] == "or":
+        if isinstance(expVal1,bool) and isinstance(expVal2,bool):
+            n = Node()
+            n.type = "OR"
+            n.val = p[1].val or p[3].val
+            n.childrens.append(p[1])
+            n.childrens.append(p[3])
+            p[0] = n
+        else:
+            print("Error: incompatible data types " + type(expVal1) + " and " + type(expVal2) + "for operation " + p[2])
+    else:
+        print("Unhandled use case")
+def p_binop(p):
+    '''binop: expression "+" expression
+            | expression "-" expression
+            | expression "*" expression
+            | expression "/" expression
+            | expression "^" expression'''
 def p_expression_binop(p):
     '''expression : expression "+" expression
                   | expression "-" expression
-                  | expression "<" expression
-                  | expression "<" "=" expression
-                  | expression ">" expression
-                  | expression ">" "=" expression
-                  | expression "=" "=" expression
-                  | expression AND expression
-                  | expression OR expression'''
+                  | expression "*" expression
+                  | expression "/" expression
+                  | expression "^" expression'''
     expVal1 = p[1].val if p[1].type != "ID" else (symbolsTable["table"][p[1].val]).get("value")
     expVal2 = p[3].val if p[3].type != "ID" else (symbolsTable["table"][p[3].val]).get("value")
     if p[2] == '+':
@@ -258,7 +300,9 @@ def p_expression_binop(p):
             p[0] = n
         else:
             print("Error: incompatible data types " + type(expVal1) + " and " + type(expVal2) + "for operation " + p[2])
-    elif p[2] == "and":
+    else:
+        print("Unhandled use case")
+    """elif p[2] == "and":
         if isinstance(expVal1,bool) and isinstance(expVal2,bool):
             print("HI")
             n = Node()
@@ -279,8 +323,8 @@ def p_expression_binop(p):
             p[0] = n
         else:
             print("Error: incompatible data types " + type(expVal1) + " and " + type(expVal2) + "for operation " + p[2])
-    else:
-        print("Unhandled use case")
+            """
+    
 
 def p_expression_inumber(p):
     "expression : INUMBER"
@@ -335,7 +379,7 @@ def genTAC(node):
     elif ( node.type == "ID" ):
         symbol = symbolsTable["table"][node.val]
         #print(symbol)
-        return str(symbol.get("value"))   
+        return node.val #str(symbol.get("value"))   
     elif ( node.type == "+"):
         tempVar = "t" + str(varCounter)
         varCounter = varCounter +1
