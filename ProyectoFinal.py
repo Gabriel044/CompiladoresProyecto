@@ -527,7 +527,7 @@ abstractTree.print()
 varCounter = 0
 labelCounter = 0
 def genTAC(node):
-    print(node.type +" "+str(node.val))
+    #print(node.type +" "+str(node.val))
     global varCounter
     global labelCounter
     if ( node.type == "ASIGN" or node.type == "INCREMENT"):
@@ -579,15 +579,30 @@ def genTAC(node):
         return tempVar
     elif ( node.type == "PRINT"):
         print( "PRINT "+ genTAC(node.childrens[0]))
-    elif ( node.type == "IF"):
-        tempVar = "t" + str(varCounter)
+    elif ( node.type == "IF" or node.type == "ELIF"):
+        """ tempVar = "t" + str(varCounter)
         varCounter = varCounter +1
         print ( tempVar + " := !" + str(node.childrens[0].val))
         tempLabel = "l" + str(labelCounter)
         labelCounter = labelCounter + 1
-        print ( "gotoLabelIf " + tempVar + " " + tempLabel)
-        genTAC(node.childrens[1])
-        print (tempLabel)
+        print ( "gotoLabelIf " + tempVar + " " + tempLabel) """
+        numChildren = len(node.childrens)
+        #genTAC(node.childrens[1])
+        labelFinal = "l" + str(labelCounter)
+        labelCounter = labelCounter + 1
+        for i in range(numChildren - 1):
+            tempVar = "t" + str(varCounter)
+            varCounter = varCounter +1
+            print ( tempVar + " := !" + str(node.childrens[0].val))
+            tempLabel = "l" + str(labelCounter)
+            labelCounter = labelCounter + 1
+            print ( "gotoLabelIf " + tempVar + " " + tempLabel)
+            genTAC(node.childrens[i + 1])
+            if numChildren > 1:
+                print("gotoLabelFinal " + labelFinal)
+            print (tempLabel)
+        if numChildren > 1:
+            print(labelFinal)
     elif (node.type == "WHILE"):
         tempVar = "t" + str(varCounter)
         varCounter = varCounter +1
